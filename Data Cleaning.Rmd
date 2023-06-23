@@ -1,0 +1,43 @@
+---
+title: "Data Cleaning"
+author: "Aaron Foote"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{R Imports}
+library(readr)
+library(dplyr)
+odds_series <- read_csv("COURSES/QAC320/odds_series.csv")
+
+
+```
+
+The data is formatted such that each row is a game, and each row has a bunch of
+observations (72 I think) from each of the sportsbooks for that game. To make
+it easier to work with I'd like to have each row be one sportsbook for one
+game. The first five variables are just data about the game, not odds. Maybe
+clip those so that a more algorithmic slicing can handle the rest?
+
+``` {R Start with First Row}
+# Start with the first row, generalize from there
+game_info <- odds_series[1,1:5]
+g1 <- odds_series[1,] %>% select(-c(match_id,match_date,match_time,score_home,score_away))
+
+#' To make sure that we're slicing correctly, let's do it on the names of g1
+#' first, as that'll be much clearer
+
+g1Names <- names(g1)
+e <- data.frame()
+i = 1
+while (i < length(g1Names) - 1) {
+  e <- rbind(e,g1Names[c(i,i+71)])
+  i <- i + 72
+}
+
+
+# This works --> do.call("rbind", replicate(32, game_info, simplify = FALSE)) %>% View()
+```
