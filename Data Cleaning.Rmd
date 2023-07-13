@@ -11,9 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{R Imports}
 library(readr)
 library(dplyr)
-odds_series <- read_csv("COURSES/QAC320/odds_series.csv")
-
-
+odds_series <- read_csv("/Users/aaronfoote/COURSES/QAC320/odds_series.csv")
 ```
 
 The data is formatted such that each row is a game, and each row has a bunch of
@@ -40,4 +38,8 @@ while (i < length(g1Names) - 1) {
 
 
 # This works --> do.call("rbind", replicate(32, game_info, simplify = FALSE)) %>% View()
+```
+
+```{r Regex to get Relevant Entries from first row}
+odds_series[1,grep(pattern = "home_b[0-9]+_0$",colnames(odds_series))] %>% View()
 ```

@@ -1,0 +1,25 @@
+---
+title: "Tinkering with Data"
+author: "Aaron Foote"
+date: "2023-07-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T)
+
+library(readr)
+library(tidyr)
+library(dplyr)
+```
+
+```{r Import Data, message = F}
+d <- read_csv("/Users/aaronfoote/Downloads/spreadspoke_scores.csv")
+```
+This dataset doesn't have the necessary info. I need money lines.
+```{r Getting Familiar + Cleaning}
+d %>% filter(!is.na(team_favorite_id)) ->d
+regularSeason <- d %>% filter(!schedule_playoff)
+playoffs <- d %>% filter(schedule_playoff)
+```
+

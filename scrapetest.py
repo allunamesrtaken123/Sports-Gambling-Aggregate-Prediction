@@ -1,7 +1,10 @@
 
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
-
+import re
+import datetime
+import random
+"""
 html = urlopen('http://pythonscraping.com/pages/page1.html')
 
 # First argument is the HTML itself, second is the parser you want BS to use
@@ -56,20 +59,21 @@ else:
     print(title)
 
 
-"""
+
 
 
 WRITE LOTS OF FUNCTIONS TO ROBUSTLY HANDLE EXCEPTIONS PLUS MAKE CODE MORE READABLE
 
 
 
-"""
+
 html = urlopen('http://www.pythonscraping.com/pages/warandpeace.html')
 bs = BeautifulSoup(html.read(),'html.parser')
 nameList = bs.findAll('span',{'class' : 'green'})
 for name in nameList:
     # get_text() should be the last thing you do (before printing/storing). Preserve the tag structure as long as possible
-    print(name.get_text())
+    #print(name.get_text())
+    pass
 
 html = urlopen("http://www.pythonscraping.com/pages/page3.html")
 bs = BeautifulSoup(html,"html.parser")
@@ -78,4 +82,36 @@ bs = BeautifulSoup(html,"html.parser")
 #    print(child)
 
 for sibling in bs.find('table',{'id' : 'giftList'}).tr.next_siblings:
-    print(sibling)
+    # This will skip the first tr element, which is useful if you want to scrape a table and the first row of the table
+    # is a header/title
+    #print(sibling)
+    pass
+
+html = urlopen('http://en.wikipedia.org/wiki/Kevin_Bacon')
+bs = BeautifulSoup(html, 'html.parser')
+for link in bs.find('div', {'id' : 'bodyContent'}).find_all('a',href = re.compile('^(/wiki/)((?!:).)*$')):
+    if 'href' in link.attrs:
+        print(link.attrs['href'])
+
+random.seed(datetime.datetime.now())
+def getLinks(articleUrl):
+    html = urlopen(f'http://en.wikipedia.org{articleUrl}')
+    bs = BeautifulSoup(html,'html.parser')
+    return bs.find('div',{'id':'bodyContent'}).find_all('a',href = re.compile('^(/wiki/)((?!:).)*$'))
+links = getLinks('/wiki/Kevin_Bacon')
+while len(links) > 0:
+    newArticle = links[random.randint(0,len(links) - 1)].attrs['href']
+    print(newArticle)
+    links = getLinks(newArticle)
+"""
+
+
+
+from selenium import webdriver 
+from selenium.webdriver.common.by import By
+import time
+driver = webdriver.Chrome() 
+driver.get('http://pythonscraping.com/pages/javascript/ajaxDemo.html') 
+time.sleep(3)
+print(driver.find_element(By.ID,"content").text)
+driver.close()
