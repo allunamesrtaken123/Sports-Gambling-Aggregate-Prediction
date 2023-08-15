@@ -1,49 +1,11 @@
-from urllib.request import urlopen
-from bs4 import BeautifulSoup
-from urllib.error import HTTPError
-from urllib.error import URLError
 import re
 from time import strftime
-import datetime
 from tqdm import tqdm
-
-
-
-"""
-try:
-    html = urlopen('https://www.betmonitor.com/odds-comparison/basketball/usa-wnba/washington-mystics-w-seattle-storm-w/106794772')
-except HTTPError as e:
-    print(e)
-except URLError as e:
-    print("Server couldn't be found")
-else:
-    print("It worked!")
-
-# As a starter, let's get the names of the teams
-bs = BeautifulSoup(html.read(),'html.parser')
-teams = bs.find_all('div',{'class' : 'teams has-logo'})[0].get_text()
-homeTeam = re.search(pattern = '[A-Za-z ]*[A-Za-z]',string= teams).group()
-awayTeam = re.search(pattern = '(?<=— )[A-Za-z ]*[A-Za-z]+', string = teams).group()
-print(homeTeam)
-print(awayTeam)
-
-# Now for the date of the game
-date = bs.find_all('span',{'class' : 'evtime-switch','data-type' : 'event-header'})[0].get_text()
-gameDate = re.search(pattern = '[A-Za-z0-9]* [A-Za-z]*, [0-9]*',string = date).group()
-print(gameDate)
-
-# Now the hard part, scraping the books
-oddsDict = {}
-odds = bs.find_all('div',{'class' : 'bookie-cont sortable'})
-for o in odds:
-    print(odds)
-    print('*'*20)
-"""
-
-
 from selenium import webdriver 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+import os
+
 options = Options()
 options.add_argument('--headless=new')
 options.add_argument("--headless=new")
@@ -56,8 +18,6 @@ links = [el.get_attribute('href') for el in leagues]
 league_links = [l for l in links if re.match(pattern = 'https://www.betmonitor.com/odds-comparison/[A-Za-z]+/[A-Za-z\-0-9]+/[0-9]{8}',string = l)]
 tennisLinks = [l for l in links if re.match(pattern = 'https://www.betmonitor.com/odds-comparison/tennis/[A-Za-z\-0-9]+/[0-9]{8}',string = l)]
 
-#for l in league_links:
-#    processLeague(l)  <-- This will update a GLOBAL dictionary thing
 driver.close()
 
 def toBEP(decimalOdds):
@@ -79,10 +39,11 @@ def processLeague(leagueLink : str, saveTo : str):
     games = driver.find_elements(By.CLASS_NAME,"dark")
     gameLinks = [el.get_attribute('href') for el in games]
     goodGameLinks = [l for l in gameLinks if re.match(pattern = 'https://www.betmonitor.com/odds-comparison/[A-Za-z]+/[A-Za-z\-0-9]+/[A-Za-z0-9/-]+/[0-9]+',string = l)]
-    for l in tqdm(goodGameLinks):
+    for l in goodGameLinks:
         bigList.extend(processMatchup(l))
     with open(f"{saveTo}/TennisScrapes.csv",'a') as f:
-        f.write('ScrapeDate,Tournament,Book,HomePlayer,HomeBEP,AwayPlayer,AwayBEP,Hold\n')
+        if os.path.getsize(f"{saveTo}/TennisScrapes.csv") == 0:
+            f.write('ScrapeDate,Tournament,Book,HomePlayer,HomeBEP,AwayPlayer,AwayBEP,Hold\n')
         for r in bigList:
             f.write(r)
     f.close()
@@ -111,8 +72,10 @@ def processMatchup(matchupLink : str):
         matchupList.append(",".join([timeOfScrape,league,bookNames[i],homeTeam,str(toBEP(homeOdds[i])),awayTeam,str(toBEP(awayOdds[i])),calculateHold({'home' : homeOdds[i], 'away' : awayOdds[i]}),'\n']))
     return matchupList
 
-
-processLeague(tennisLinks[0], "/Users/aaronfoote/COURSES/Arbitrage Project")
+print(f"Links: {len(tennisLinks)}")
+for l in tennisLinks:
+    print(l)
+    processLeague(l, "/Users/aaronfoote/COURSES/Arbitrage Project")
 
 
 """
