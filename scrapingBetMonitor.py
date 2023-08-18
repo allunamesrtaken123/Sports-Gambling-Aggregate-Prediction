@@ -16,7 +16,10 @@ leagues = driver.find_elements(By.CLASS_NAME,"dark")
 links = [el.get_attribute('href') for el in leagues]
 
 league_links = [l for l in links if re.match(pattern = 'https://www.betmonitor.com/odds-comparison/[A-Za-z]+/[A-Za-z\-0-9]+/[0-9]{8}',string = l)]
-tennisLinks = [l for l in links if re.match(pattern = 'https://www.betmonitor.com/odds-comparison/tennis/[A-Za-z\-0-9]+/[0-9]{8}',string = l)]
+ends = [l[43:] for l in league_links]
+sports = [re.match(pattern='^[A-Za-z\-]+', string = e).group() for e in ends]
+sports = list(set(sports))
+#tennisLinks = [l for l in links if re.match(pattern = 'https://www.betmonitor.com/odds-comparison/tennis/[A-Za-z\-0-9]+/[0-9]{8}',string = l)]
 
 driver.close()
 
@@ -31,8 +34,14 @@ def calculateHold(game):
     '''
     return str(sum([toBEP(odds) for odds in game.values()]) - 1)
 
+def processSport(links : list):
+    l = []
+    for link in links:
+        l.extend(processLeague(link))
+    return l
 
-def processLeague(leagueLink : str, saveTo : str):
+
+def processLeague(leagueLink : str):
     bigList = []
     driver = webdriver.Chrome(options = options)
     driver.get(leagueLink)
@@ -41,12 +50,8 @@ def processLeague(leagueLink : str, saveTo : str):
     goodGameLinks = [l for l in gameLinks if re.match(pattern = 'https://www.betmonitor.com/odds-comparison/[A-Za-z]+/[A-Za-z\-0-9]+/[A-Za-z0-9/-]+/[0-9]+',string = l)]
     for l in goodGameLinks:
         bigList.extend(processMatchup(l))
-    with open(f"{saveTo}/TennisScrapes.csv",'a') as f:
-        if os.path.getsize(f"{saveTo}/TennisScrapes.csv") == 0:
-            f.write('ScrapeDate,Tournament,Book,HomePlayer,HomeBEP,AwayPlayer,AwayBEP,Hold\n')
-        for r in bigList:
-            f.write(r)
-    f.close()
+    return bigList
+    
 
 def processMatchup(matchupLink : str):
     matchupList = []
@@ -72,13 +77,33 @@ def processMatchup(matchupLink : str):
         matchupList.append(",".join([timeOfScrape,league,bookNames[i],homeTeam,str(toBEP(homeOdds[i])),awayTeam,str(toBEP(awayOdds[i])),calculateHold({'home' : homeOdds[i], 'away' : awayOdds[i]}),'\n']))
     return matchupList
 
+def bookkeep(saveTo,sport,toSave):
+    with open(f"{saveTo}/{sport}.csv",'a') as f:
+        if os.path.getsize(f"{saveTo}/{sport}.csv") == 0:
+            f.write('ScrapeDate,Tournament,Book,HomePlayer,HomeBEP,AwayPlayer,AwayBEP,Hold\n')
+        for r in toSave:
+            f.write(r)
+    f.close()
+
+
+for s in tqdm(sports):
+    # you can't combine f'' string formatting and regular expressions so you have to use % string formatting
+    links = [l for l in league_links if re.match(pattern = 'https://www.betmonitor.com/odds-comparison/%s/[A-Za-z\-0-9]+/[0-9]{8}' % (s),string = l)]
+    print(s)
+    for l in links:
+        print(l)
+    print("--------------------")
+    bookkeep("/Users/aaronfoote/COURSES/Arbitrage Project",s,processSport(links))
+
+"""
 print(f"Links: {len(tennisLinks)}")
 for l in tennisLinks:
     print(l)
     processLeague(l, "/Users/aaronfoote/COURSES/Arbitrage Project")
 
 
-"""
+
+
 Next to do:
 
 For each game, I want to get some summary data like the home team, away team, date/time of the competition, and 
